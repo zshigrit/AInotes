@@ -1,0 +1,59 @@
+use a community-scale core model from the start, but train it to absorb ecosystem/process modalities as paired views when available. I’m checking a few primary sources so I can turn that into a concrete architecture and training recipe. The clean way to do it is not to merge them into one giant model from day 1. Instead, build Version 1 as the core, then make Version 3 the multimodal extension layer. In other words:
+
+core foundation model = community representation model
+extension = ecosystem/process multimodal fusion when paired data exist
+
+That design matches the realities of microbiome data: community profiles and metadata are much more abundant than fully paired metagenome + metatranscriptome + metabolomics + process measurements, so your pretraining backbone should learn from the broadest data first, then absorb richer modalities where available. Public microbiome resources such as MGnify already emphasize standardized microbiome samples with associated contextual metadata across metagenomic, metatranscriptomic, amplicon, and assembly data, which makes this staged design especially practical.
+
+## Here is the architecture I would recommend.
+
+### 1. Build a two-level foundation model
+Level A: universal community backbone
+
+Train on the largest possible number of samples using:
+
+taxonomic abundance profiles
+
+functional/pathway abundance profiles
+
+environmental/site metadata
+
+This becomes the base encoder that every sample can use, even when only one or two data types are available. Emerging microbiome foundation-model work is already moving in this direction, with pretrained models on large microbiome sample collections, while FAIR data principles strongly support building around interoperable, reusable metadata-rich datasets rather than narrow bespoke datasets.
+
+### Level B: multimodal ecosystem fusion
+
+Then add optional encoders for:
+
+metatranscriptomics
+
+metabolomics
+
+proteomics
+
+edaphic chemistry / geochemistry
+
+climate forcing
+
+ecosystem process variables such as respiration, methane flux, enzyme activity, SOC turnover proxies
+
+These should be plug-in modality branches, not requirements for every sample. This is the key idea: the model should still work when a sample has only taxa + pathways + pH, but improve when extra modalities are present. Multimodal foundation model work in other biological and medical domains repeatedly shows that pretrained unimodal or core representations can be fused effectively with richer paired modalities for stronger transfer and cross-modal retrieval, which is a good template here.
+
+## 2. Use a modular encoder design
+
+I would structure it like this:
+
+Taxonomy encoder for ASVs/OTUs/species/genus/MAG abundances
+
+Function encoder for KEGG/eggNOG/InterPro/pathway profiles
+
+Metadata encoder for pH, temperature, precipitation, soil texture, host, biome, treatment
+
+Transcript encoder for metatranscriptomic functional expression
+
+Metabolite encoder for metabolomics
+
+Process encoder for fluxes or ecosystem measurements
+
+Fusion module that combines whichever branches are present
+
+The important part is that each sample can enter with a mask of available modalities. So if one sample has only metagenomics + metadata, and another has metagenomics + transcriptomics + metabolomics + soil chemistry, both are trainable. This is the most realistic way to combine your Version 1 and Version 3 goals, because real ecological datasets are highly incomplete across modalities. MGnify’s infrastructure and FAIR-style data stewardship both support precisely this kind of metadata-aware, heterogeneous-data workflow.
