@@ -57,3 +57,61 @@ Process encoder for fluxes or ecosystem measurements
 Fusion module that combines whichever branches are present
 
 The important part is that each sample can enter with a mask of available modalities. So if one sample has only metagenomics + metadata, and another has metagenomics + transcriptomics + metabolomics + soil chemistry, both are trainable. This is the most realistic way to combine your Version 1 and Version 3 goals, because real ecological datasets are highly incomplete across modalities. MGnify’s infrastructure and FAIR-style data stewardship both support precisely this kind of metadata-aware, heterogeneous-data workflow.
+
+## 3. Make the community backbone your anchor
+
+Your base input for nearly every sample should be:
+
+taxonomic composition
+
+functional composition
+
+standardized environmental metadata
+
+That is your Version 1 part.
+
+Then treat Version 3 modalities as paired views of the same ecological state:
+
+metatranscriptome = active functional state
+
+metabolome = biochemical outcome state
+
+soil chemistry = abiotic context
+
+fluxes = ecosystem process manifestation
+
+So the model learns:
+
+community structure → functional potential → active expression → metabolite/process outcome
+
+That chain is ecologically meaningful and much easier to justify in a paper than an undifferentiated multimodal blob. Reviews on AI-enabled microbiome research and recent biological multimodal FM papers both support multi-omics integration as a promising way to connect composition with function and phenotype.
+
+4. Use multi-stage pretraining, not one-shot training
+
+I would train it in four stages.
+
+Stage 1: backbone pretraining
+
+Train the community backbone on the biggest dataset you can assemble.
+
+Inputs:
+
+taxa abundance
+
+pathway abundance
+
+metadata
+
+Objectives:
+
+masked taxa prediction
+
+masked pathway prediction
+
+metadata-conditioned contrastive learning
+
+reconstruction of function from taxonomy
+
+reconstruction of taxonomy from function where appropriate
+
+This stage gives you a general microbial-ecology embedding space. Recent microbiome foundation-model papers and broader biological FM work support large-scale pretraining as the main source of transfer power.
