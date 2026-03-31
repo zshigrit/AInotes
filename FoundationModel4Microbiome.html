@@ -86,7 +86,7 @@ community structure → functional potential → active expression → metabolit
 
 That chain is ecologically meaningful and much easier to justify in a paper than an undifferentiated multimodal blob. Reviews on AI-enabled microbiome research and recent biological multimodal FM papers both support multi-omics integration as a promising way to connect composition with function and phenotype.
 
-4. Use multi-stage pretraining, not one-shot training
+## 4. Use multi-stage pretraining, not one-shot training
 
 I would train it in four stages.
 
@@ -115,3 +115,179 @@ reconstruction of function from taxonomy
 reconstruction of taxonomy from function where appropriate
 
 This stage gives you a general microbial-ecology embedding space. Recent microbiome foundation-model papers and broader biological FM work support large-scale pretraining as the main source of transfer power.
+
+Stage 2: multimodal alignment
+
+Using only paired datasets, add transcriptomics, metabolomics, soil chemistry, and process variables.
+
+Objectives:
+
+align sample embeddings across modalities
+
+predict missing modalities from observed ones
+
+contrastive matching of same-sample different modalities
+
+cross-modal retrieval
+
+For example:
+
+metagenome ↔ metatranscriptome
+
+community profile ↔ metabolome
+
+community profile ↔ soil chemistry
+
+community profile ↔ process rates
+
+This lets the base model absorb richer biology without requiring those modalities for every training point. Multimodal FM studies in adjacent domains consistently show that paired-view alignment is a strong strategy for improving robustness and transfer.
+
+Stage 3: ecosystem supervision
+
+Add supervised heads for ecological tasks:
+
+biome classification
+
+pH / salinity / moisture / temperature prediction
+
+treatment detection such as warming, drought, N addition
+
+methane or respiration class/regression
+
+disturbance recovery / resilience state
+
+host/environment association
+
+This is where you test whether the representation is actually useful for ecology rather than just mathematically elegant.
+
+Stage 4: retrieval and generation
+
+Later, add retrieval or generative abilities:
+
+retrieve similar ecosystems
+
+impute missing modalities
+
+generate likely functional shifts under environmental perturbation
+
+estimate ecological trajectories
+
+## 5. Use missing-modality training from the beginning
+
+Because ecological multi-omics is sparse, your model must be trained to tolerate missing branches.
+
+Concretely:
+
+randomly drop modalities during training
+
+include modality-presence masks
+
+optimize the model so it performs well with partial inputs
+
+predict withheld modalities from present ones
+
+Example:
+
+input only taxonomy + metadata, predict pathways
+
+input taxonomy + pathways, predict transcript profile
+
+input community + chemistry, predict process class
+
+input transcriptome alone, align back to community embedding
+
+That way the model does not collapse when a sample lacks metabolomics or transcriptomics. This design is especially important because public resources are rich in sample count but uneven in modality coverage
+
+## 6. Organize your data schema around sample-centered ecological states
+
+I would recommend one row per sample-timepoint, with linked tables for each modality.
+
+Core table
+
+sample_id
+
+study_id
+
+site_id
+
+date/time
+
+biome
+
+latitude/longitude coarse bin
+
+habitat ontology
+
+treatment labels
+
+pH, temperature, moisture, salinity, nutrient variables
+
+Modality tables
+
+taxonomy table
+
+pathway table
+
+gene family table
+
+transcript table
+
+metabolite table
+
+chemistry table
+
+process table
+
+Split keys
+
+study
+
+site
+
+geography
+
+biome
+
+time
+
+This is important because you want evaluation splits by study and site, not random rows. FAIR principles are especially relevant here because interoperability and standardized metadata are what make this sort of cross-study pretraining possible.
+
+## 7. Pick losses that reflect both Version 1 and Version 3
+
+A good combined loss would look like:
+
+## 8. Keep the evaluation split into three tiers
+
+You need to prove three things.
+
+Tier 1: representation quality
+
+linear probes on biome, pH, salinity, host, disturbance
+
+kNN retrieval of ecologically similar samples
+
+clustering purity by biome or habitat
+
+Tier 2: multimodal integration value
+
+Compare:
+
+community backbone only
+
+community + metadata
+
+community + metadata + multimodal fusion
+
+This tells you whether Version 3 genuinely adds value over Version 1.
+
+Tier 3: scientific utility
+
+predict measured ecosystem process rates
+
+identify gradients such as drought/warming response
+
+impute missing functional or chemical states
+
+test transfer to unseen studies and unseen biomes
+
+Recent microbiome FM work explicitly highlights batch effects and study heterogeneity as central problems, so out-of-study evaluation should be mandatory.
